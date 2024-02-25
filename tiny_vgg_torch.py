@@ -116,7 +116,21 @@ val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 test_dataset = TinyImageNetDataset(root_dir='./test', class_dict=class_dict, file_dict=file_dict, transform=transform)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-# Validation and test loaders can be created similarly
+# Calculate mean and std using torchvision.transforms.Normalize
+mean = torch.zeros(3)
+std = torch.zeros(3)
+
+for images, _ in train_loader:
+    # Images are expected to be in the range [0, 1]
+    mean += images.mean(dim=(0, 2, 3))
+    std += images.std(dim=(0, 2, 3))
+
+# Calculate the mean and std over the entire dataset
+mean /= len(train_loader)
+std /= len(train_loader)
+
+print("Mean:", mean.tolist())
+print("Std:", std.tolist())
 
 # Instantiate the model
 tiny_vgg = TinyVGG()
@@ -160,7 +174,7 @@ for epoch in range(EPOCHS):
         no_improvement_epochs = 0
         best_val_loss = val_loss
         # Save the best model
-        torch.save(tiny_vgg.state_dict(), 'trained_vgg_best.pth')
+        torch.save(tiny_vgg.state_dict(), 'trained_vgg_best1.pth')
     else:
         no_improvement_epochs += 1
 
@@ -172,7 +186,7 @@ print(f'\nFinished training, used {(time() - start_time) / 60:.4f} mins.')
 
 # Load the best model
 best_model = TinyVGG()
-best_model.load_state_dict(torch.load('trained_vgg_best.pth'))
+best_model.load_state_dict(torch.load('trained_vgg_best1.pth'))
 
 # Test on hold-out test images
 test_loss = 0.0
